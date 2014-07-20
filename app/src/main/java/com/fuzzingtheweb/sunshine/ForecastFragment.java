@@ -1,9 +1,12 @@
 package com.fuzzingtheweb.sunshine;
 
 import android.app.Fragment;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -11,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -23,8 +27,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 public class ForecastFragment extends Fragment {
@@ -45,28 +47,39 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        String[] data = {
-                "No data"
-        };
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(data));
-
         mForecastAdapter =
                 new ArrayAdapter<String>(
                         getActivity(), // The current context (this activity)
                         R.layout.list_item_forecast, // The name of the layout ID.
                         R.id.list_item_forecast_textview, // The ID of the textview to populate.
-                        weekForecast);
+                        new ArrayList<String>());
 
         // Get a reference to the ListView, and attach this adapter to it.
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
-        listView.setAdapter(mForecastAdapter);
 
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String forecast = mForecastAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class)
+                        .putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
+            }
+        });
+
+        listView.setAdapter(mForecastAdapter);
         return rootView;
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.forecastfragment, menu);
+        inflater.inflate(R.menu.forecast_fragment, menu);
     }
 
     @Override
@@ -76,11 +89,23 @@ public class ForecastFragment extends Fragment {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask task = new FetchWeatherTask();
-            task.execute("94043");
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void updateWeather() {
+        FetchWeatherTask task = new FetchWeatherTask();
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        String location = preferences.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        String units = preferences.getString(getString(R.string.pref_units_key),
+                getString(R.string.pref_units_default));
+
+        task.execute(location, units);
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
@@ -111,7 +136,7 @@ public class ForecastFragment extends Fragment {
                 Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
                         .appendQueryParameter(QUERY_PARAM, params[0])
                         .appendQueryParameter(FORMAT_PARAM, format)
-                        .appendQueryParameter(UNITS_PARAM, units)
+                        .appendQueryParameter(UNITS_PARAM, params[1])
                         .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                         .build();
 
