@@ -31,6 +31,9 @@
             android:label="@string/title_activity_settings"
             android:parentActivityName="com.fuzzingtheweb.sunshine.MainActivity">
         </activity>
+        <provider
+            android:authorities="com.fuzzingtheweb.sunshine"
+            android:name=".data.WeatherProvider" />
     </application>
 
 </manifest>
