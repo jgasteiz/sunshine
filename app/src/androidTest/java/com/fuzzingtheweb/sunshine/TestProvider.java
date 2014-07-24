@@ -1,20 +1,17 @@
 package com.fuzzingtheweb.sunshine;
 
 import android.annotation.TargetApi;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.test.AndroidTestCase;
-import android.util.Log;
 
 import com.fuzzingtheweb.sunshine.data.WeatherContract.LocationEntry;
 import com.fuzzingtheweb.sunshine.data.WeatherContract.WeatherEntry;
 import com.fuzzingtheweb.sunshine.data.WeatherDbHelper;
-
-import java.util.Map;
-import java.util.Set;
 
 public class TestProvider extends AndroidTestCase {
 
@@ -31,14 +28,14 @@ public class TestProvider extends AndroidTestCase {
         WeatherDbHelper dbHelper = new WeatherDbHelper(mContext);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-        ContentValues testValues = TestDb.createNorthPoleLocationValues();
+        ContentValues locationValues = TestDb.createNorthPoleLocationValues();
 
-        long locationRowId;
-        locationRowId = db.insert(LocationEntry.TABLE_NAME, null, testValues);
+        Uri locationInsertUri = mContext.getContentResolver()
+                .insert(LocationEntry.CONTENT_URI, locationValues);
+        assertTrue(locationInsertUri != null);
 
-        // Verify we got a row back.
-        assertTrue(locationRowId != -1);
-        Log.d(LOG_TAG, "New row id: " + locationRowId);
+        long locationRowId = ContentUris.parseId(locationInsertUri);
+
 
         // Data's inserted.  IN THEORY.  Now pull some out to stare at it and verify it made
         // the round trip.
@@ -54,7 +51,7 @@ public class TestProvider extends AndroidTestCase {
                 null // sort order
         );
 
-        TestDb.validateCursor(cursor, testValues);
+        TestDb.validateCursor(cursor, locationValues);
 
         // Fantastic.  Now that we have a location, add some weather!
         ContentValues weatherValues = TestDb.createWeatherValues(locationRowId);
@@ -76,7 +73,7 @@ public class TestProvider extends AndroidTestCase {
 
         // Add the location values in with the weather data so that we can make
         // sure that the join worked and we actually get all the values back
-        addAllContentValues(weatherValues, testValues);
+        addAllContentValues(weatherValues, locationValues);
 
         // Get the joined Weather and Location data
         weatherCursor = mContext.getContentResolver().query(
