@@ -21,6 +21,9 @@ public class TestDb extends AndroidTestCase {
     static public String TEST_LOCATION = "99705";
     static public String TEST_DATE = "20141205";
 
+    static final String KALAMAZOO_LOCATION_SETTING = "kalamazoo";
+    static final String KALAMAZOO_WEATHER_START_DATE = "20140625";
+
     public void testCreateDb() throws Throwable {
         mContext.deleteDatabase(WeatherDbHelper.DATABASE_NAME);
         SQLiteDatabase db = new WeatherDbHelper(
@@ -106,6 +109,33 @@ public class TestDb extends AndroidTestCase {
         testValues.put(LocationEntry.COLUMN_CITY_NAME, TEST_CITY_NAME);
         testValues.put(LocationEntry.COLUMN_COORD_LAT, 64.7488);
         testValues.put(LocationEntry.COLUMN_COORD_LONG, -147.353);
+
+        return testValues;
+    }
+
+    static ContentValues createKalamazooWeatherValues(long locationRowId) {
+        ContentValues weatherValues = new ContentValues();
+        weatherValues.put(WeatherEntry.COLUMN_LOC_KEY, locationRowId);
+        weatherValues.put(WeatherEntry.COLUMN_DATETEXT, KALAMAZOO_WEATHER_START_DATE);
+        weatherValues.put(WeatherEntry.COLUMN_DEGREES, 1.2);
+        weatherValues.put(WeatherEntry.COLUMN_HUMIDITY, 1.5);
+        weatherValues.put(WeatherEntry.COLUMN_PRESSURE, 1.1);
+        weatherValues.put(WeatherEntry.COLUMN_MAX_TEMP, 85);
+        weatherValues.put(WeatherEntry.COLUMN_MIN_TEMP, 35);
+        weatherValues.put(WeatherEntry.COLUMN_SHORT_DESC, "Cats and Dogs");
+        weatherValues.put(WeatherEntry.COLUMN_WIND_SPEED, 3.4);
+        weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, 42);
+
+        return weatherValues;
+    }
+
+    static ContentValues createKalamazooLocationValues() {
+        // Create a new map of values, where column names are the keys
+        ContentValues testValues = new ContentValues();
+        testValues.put(LocationEntry.COLUMN_LOCATION_SETTING, KALAMAZOO_LOCATION_SETTING);
+        testValues.put(LocationEntry.COLUMN_CITY_NAME, "Kalamazoo");
+        testValues.put(LocationEntry.COLUMN_COORD_LAT, 42.2917);
+        testValues.put(LocationEntry.COLUMN_COORD_LONG, -85.5872);
 
         return testValues;
     }
